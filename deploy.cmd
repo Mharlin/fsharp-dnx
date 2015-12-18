@@ -47,28 +47,20 @@ IF NOT DEFINED KUDU_SYNC_CMD (
   :: Locally just running "kuduSync" would also work
   SET KUDU_SYNC_CMD=%appdata%\npm\kuduSync.cmd
 )
+
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Deployment
 :: ----------
 
-echo Handling DNX Console Application deployment.
+echo Handling Basic Web Site deployment.
 
-:: 1. Set WebJob deployment target
-IF NOT DEFINED WEBJOB_DEPLOYMENT_TARGET (
-  SET WEBJOB_DEPLOYMENT_TARGET=App_Data\jobs\continuous\deployedJob
+:: 1. KuduSync
+IF /I "%IN_PLACE_DEPLOYMENT%" NEQ "1" (
+  call :ExecuteCmd "%KUDU_SYNC_CMD%" -v 50 -f "D:\home\site\repository\sample\HelloMvc" -t "%DEPLOYMENT_TARGET%" -n "%NEXT_MANIFEST_PATH%" -p "%PREVIOUS_MANIFEST_PATH%" -i ".git;.hg;.deployment;deploy.cmd"
+  IF !ERRORLEVEL! NEQ 0 goto error
 )
-
-:: 2. Create WebJob directory
-IF EXIST "WEBJOB_DEPLOYMENT_TARGET" (
-  CALL :ExecuteCmd mkdir "%DEPLOYMENT_TARGET%\%WEBJOB_DEPLOYMENT_TARGET%"
-)
-
-:: 3. KuduSync
-CALL :ExecuteCmd "%KUDU_SYNC_CMD%" -v 50 -f "D:\home\site\repository\sample\HelloMvc" -t "%DEPLOYMENT_TARGET%" -s "%WEBJOB_DEPLOYMENT_TARGET%" -n "%NEXT_MANIFEST_PATH%" -p "%PREVIOUS_MANIFEST_PATH%" -i ".git;.hg;.deployment;deploy.cmd"
-IF !ERRORLEVEL! NEQ 0 goto error
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
 
 :: Post deployment stub
 IF DEFINED POST_DEPLOYMENT_ACTION call "%POST_DEPLOYMENT_ACTION%"
